@@ -1,7 +1,7 @@
 import requests
 from secrets import (PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY,
                      PORKBUN_DOMAIN, PORKBUN_RECORD_NAMES, PORKBUN_RECORD_TYPE)
-from commands import Print
+
 
 def print_safe(*args, **kwargs):
     args = list(args)
@@ -19,7 +19,7 @@ def print_safe(*args, **kwargs):
         for key in kwargs.keys():
             kwargs[key] = kwargs[key].replace(secret, replace)
 
-    Print.prettify(*args, **kwargs)
+    print(*args, **kwargs)
 
 
 def get_public_ip():
@@ -68,6 +68,10 @@ def update_domain_dns(api_key, secret_api_key, domain, record_id, record_name, r
         "ttl": "300"
     }
 
+    print_safe(f"Payload: {payload}")
+    print_safe(f"URL: {url}")
+    raise Exception("debug")
+
     response = requests.post(url, json=payload)
     return response.json()
 
@@ -101,19 +105,21 @@ def main():
         records = get_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN)
 
         if record_name == '@':
-            record_name_real = PORKBUN_DOMAIN
+            record_name_find = PORKBUN_DOMAIN
         else:
-            record_name_real = record_name + '.' + PORKBUN_DOMAIN
+            record_name_find = record_name + '.' + PORKBUN_DOMAIN
 
         record_id = None
         for record in records['records']:
-            if record['name'] == record_name_real and record['type'] == PORKBUN_RECORD_TYPE:
+            if record['name'] == record_name_find and record['type'] == PORKBUN_RECORD_TYPE:
                 record_id = record['id']
                 break
 
         if record_id is None:
-            raise Exception(f"Record {record_name_real} not found in {PORKBUN_DOMAIN}. Skipping update.")
+            print_safe(f"Records: {records}")
+            raise Exception(f"Record {record_name_find} not found in {PORKBUN_DOMAIN}. Skipping update.")
 
+        record_name_real = record_name if record_name != '@' else ''
         update_response = update_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN, record_id,
                                             record_name_real, PORKBUN_RECORD_TYPE, current_ip)
 
