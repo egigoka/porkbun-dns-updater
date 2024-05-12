@@ -75,7 +75,6 @@ def update_domain_dns(api_key, secret_api_key, domain, record_id, record_name, r
 def main():
     # Get the current public IP
     current_ip = get_public_ip()
-    print_safe(f"Current IP: {current_ip}")
 
     # Test the authentication with ping
     ping_response = test_ping(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY)
@@ -90,7 +89,6 @@ def main():
         last_ip = None
 
     if current_ip == last_ip:
-        print_safe("IP has not changed. No need to update DNS records.")
         return
 
     records = get_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN)
@@ -119,8 +117,7 @@ def main():
             success = success and update_response["status"] == "SUCCESS"
         except KeyError:
             success = False
-            break
-        if update_response:
+        if update_response["status"] == "SUCCESS":
             print_safe(f"Successfully updated {record_name_find} to {current_ip}")
         else:
             print_safe(f"Failed to update {record_name_find} to {current_ip}: {update_response}")
@@ -129,7 +126,7 @@ def main():
         with open('last_ip.txt', 'w') as file:
             file.write(current_ip)
     else:
-        raise Exception("Failed to update DNS records.")
+        print_safe("Failed to update all DNS records.")
 
 
 if __name__ == "__main__":
