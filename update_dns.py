@@ -93,16 +93,14 @@ def main():
         print_safe("IP has not changed. No need to update DNS records.")
         return
 
+    records = get_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN)
+
     success = True
     for record_name in PORKBUN_RECORD_NAMES:
-        print_safe(f"Updating record {record_name} for {PORKBUN_DOMAIN} to {current_ip}")
+        record_name_find = record_name + '.' + PORKBUN_DOMAIN if record_name != '@' else PORKBUN_DOMAIN
+        record_name_real = record_name if record_name != '@' else ''
 
-        records = get_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN)
-
-        if record_name == '@':
-            record_name_find = PORKBUN_DOMAIN
-        else:
-            record_name_find = record_name + '.' + PORKBUN_DOMAIN
+        print_safe(f"Updating record {record_name_find} for {PORKBUN_DOMAIN} to {current_ip}")
 
         record_id = None
         for record in records['records']:
@@ -114,7 +112,6 @@ def main():
             print_safe(f"Records: {records}")
             raise Exception(f"Record {record_name_find} not found in {PORKBUN_DOMAIN}. Skipping update.")
 
-        record_name_real = record_name if record_name != '@' else ''
         update_response = update_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN, record_id,
                                             record_name_real, PORKBUN_RECORD_TYPE, current_ip)
 
@@ -122,10 +119,11 @@ def main():
             success = success and update_response["status"] == "SUCCESS"
         except KeyError:
             success = False
+            break
         if update_response:
-            print_safe(f"Update Response for {record_name}: {update_response}")
+            print_safe(f"Successfully updated {record_name_find} to {current_ip}")
         else:
-            print_safe("Failed to update {record_name}.")
+            print_safe(f"Failed to update {record_name_find} to {current_ip}: {update_response}")
 
     if success:
         with open('last_ip.txt', 'w') as file:
