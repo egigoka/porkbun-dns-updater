@@ -68,10 +68,6 @@ def update_domain_dns(api_key, secret_api_key, domain, record_id, record_name, r
         "ttl": "300"
     }
 
-    print_safe(f"Payload: {payload}")
-    print_safe(f"URL: {url}")
-    raise Exception("debug")
-
     response = requests.post(url, json=payload)
     return response.json()
 
@@ -83,7 +79,6 @@ def main():
 
     # Test the authentication with ping
     ping_response = test_ping(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY)
-    print_safe(f"Ping Response: {ping_response}")
 
     if ping_response.get('status') != 'SUCCESS':
         raise Exception("Failed to authenticate with Porkbun API.")
