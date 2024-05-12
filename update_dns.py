@@ -112,6 +112,7 @@ def main():
                 break
 
         if record_id is None:
+            print_safe(f"Records: {records}")
             raise Exception(f"Record {record_name_real} not found in {PORKBUN_DOMAIN}. Skipping update.")
 
         update_response = update_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN, record_id,
