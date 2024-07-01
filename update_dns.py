@@ -1,4 +1,5 @@
 import requests
+import time
 from secrets import (PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY,
                      PORKBUN_DOMAIN, PORKBUN_RECORD_NAMES, PORKBUN_RECORD_TYPE)
 
@@ -24,7 +25,13 @@ def print_safe(*args, **kwargs):
 
 def get_public_ip():
     """Get the current public IP address."""
-    response = requests.get("http://ipinfo.io/ip")
+    for i in range(10):
+        try:
+            response = requests.get("http://ipinfo.io/ip")
+            break
+        except requests.exceptions.ConnectionError:
+            time.sleep(60)
+            print(f"connection error, retrying in 60 seconds... retry {i+1}")
     return response.text.strip()
 
 
