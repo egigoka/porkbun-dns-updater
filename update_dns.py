@@ -37,14 +37,23 @@ def get_public_ip():
 
 def test_ping(api_key, secret_api_key):
     """Ping Porkbun to test if the API key and secret are correct."""
-    url = "https://porkbun.com/api/json/v3/ping"
-    payload = {
-        "apikey": api_key,
-        "secretapikey": secret_api_key
-    }
+    json = None
+    retries = 10
+    for retry in range(retries):
+        url = "https://porkbun.com/api/json/v3/ping"
+        payload = {
+            "apikey": api_key,
+            "secretapikey": secret_api_key
+        }
 
-    response = requests.post(url, json=payload)
-    return response.json()
+        response = requests.post(url, json=payload)
+        try:
+            json = response.json()
+            break
+        except requests.exceptions.JSONDecodeError:
+            if retry == retries - 1:
+                raise  # retries exceeded
+    return json
 
 
 def get_domain_dns(api_key, secret_api_key, domain):
@@ -82,13 +91,7 @@ def update_domain_dns(api_key, secret_api_key, domain, record_id, record_name, r
 def main():
     # Get the current public IP
     current_ip = get_public_ip()
-
-    # Test the authentication with ping
-    ping_response = test_ping(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY)
-
-    if ping_response.get('status') != 'SUCCESS':
-        raise Exception("Failed to authenticate with Porkbun API.")
-
+    
     try:
         with open('last_ip.txt', 'r') as file:
             last_ip = file.read().strip()
@@ -97,6 +100,12 @@ def main():
 
     if current_ip == last_ip:
         return
+
+    # Test the authentication with ping
+    ping_response = test_ping(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY)
+
+    if ping_response.get('status') != 'SUCCESS':
+        raise Exception("Failed to authenticate with Porkbun API.")
 
     records = get_domain_dns(PORKBUN_API_KEY, PORKBUN_SECRET_API_KEY, PORKBUN_DOMAIN)
 
